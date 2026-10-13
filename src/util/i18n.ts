@@ -42,10 +42,13 @@ export function $ts(
         ? "one"
         : "other";
 
-    const val = browser.i18n.getMessage(`${keyBase}.${category}`, [
-      n.toString(),
-      ...substitutions,
-    ]);
+    const subs = [n.toString(), ...substitutions];
+    // CHROME: Message keys may only contain [A-Za-z0-9_], so the Chrome build
+    // renames "key.plural" to "key__plural" (see patch-locales-for-chrome.js).
+    // Chrome silently returns "" for the dotted form, so we try both.
+    const val =
+      browser.i18n.getMessage(`${keyBase}.${category}`, subs) ||
+      browser.i18n.getMessage(`${keyBase}__${category}`, subs);
 
     if (val) return val;
     else console.warn(`Missing translation for key: ${keyBase}.${category}`);

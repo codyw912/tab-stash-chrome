@@ -140,6 +140,7 @@ build-chrome-dbg: build-dbg
 		rm -f dist-chrome/manifest.json; \
 		exit 1 \
 	)
+	node ./patch-locales-for-chrome.js dist-chrome/_locales
 .PHONY: build-chrome-dbg
 
 build-dbg: node_modules icons dist/tab-stash.css
