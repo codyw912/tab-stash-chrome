@@ -134,6 +134,11 @@ class MockBookmarks implements BM.Static {
 
     const index = bookmark.index ?? parent.children.length;
     /* c8 ignore next 5 -- bug-checking */
+    if (index < 0 || index > parent.children.length) {
+      // Chrome rejects indexes past the end of the folder (Firefox appends
+      // instead), so be strict here to catch code that relies on clamping.
+      throw new Error(`Index out of bounds.`);
+    }
 
     // Allow for the creation of "corrupt" bookmarks folders by specifying
     // invalid indexes. We still want the bookmarks to be positioned properly in

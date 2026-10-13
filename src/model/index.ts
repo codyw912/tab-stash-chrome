@@ -864,10 +864,15 @@ export class Model {
 
       // If it's a tab or group, check if it's actually stashable and mark it
       // for closure if so; otherwise exclude it.
+      //
+      // Skipped items don't take up a slot in the folder, so the insertion
+      // point mustn't advance. (Firefox clamps an index that's past the end of
+      // the folder, but Chrome throws.)
       if (isTab(item)) {
         if (!item.hidden && this.isURLStashable(item.url)) {
           close_tabs.push(item);
         } else {
+          --to_index;
           continue;
         }
       }
@@ -876,7 +881,10 @@ export class Model {
         const stashable_children = item.children.filter(
           c => !c.hidden && this.isURLStashable(c.url),
         );
-        if (stashable_children.length === 0) continue;
+        if (stashable_children.length === 0) {
+          --to_index;
+          continue;
+        }
 
         // The group itself will be implicitly deleted once all its tabs close.
         close_tabs.splice(close_tabs.length, 0, ...stashable_children);

@@ -1067,6 +1067,71 @@ describe("model", () => {
       ).to.deep.equal(urls);
     });
 
+    it("keeps tabs in order when skipping unstashable tabs", async () => {
+      // real_harry is hidden, so it's skipped; it must not leave a gap.
+      const p = env.model.putItemsInFolder({
+        items: [
+          env.model.tabs.tab(env.tabs.real_bob.id)!,
+          env.model.tabs.tab(env.tabs.real_harry.id)!,
+          env.model.tabs.tab(env.tabs.real_estelle.id)!,
+        ],
+        toFolder: env.model.bookmarks.folder(env.bookmarks.names.id)!,
+        toIndex: 2,
+      });
+      await events.nextN(browser.bookmarks.onCreated, 2);
+      await events.nextN(browser.tabs.onUpdated, 3);
+      await p;
+
+      const urls = [
+        `${B}#doug`,
+        `${B}#helen`,
+        `${B}#bob`,
+        `${B}#estelle`,
+        `${B}#patricia`,
+        `${B}#nate`,
+      ];
+
+      const real_folder = await browser.bookmarks.getChildren(
+        env.bookmarks.names.id,
+      );
+      expect(
+        real_folder.map(c => c.url),
+        "Browser bookmark URLs",
+      ).to.deep.equal(urls);
+
+      const folder = env.model.bookmarks.folder(env.bookmarks.names.id)!;
+      expect(
+        folder.children.map(c => c?.type === "bookmark" && c.url),
+        "Model bookmark URLs",
+      ).to.deep.equal(urls);
+    });
+
+    it("creates bookmarks at valid indexes when skipping unstashable tabs", async () => {
+      // Chrome rejects bookmark indexes past the end of the folder, so a gap
+      // left by a skipped tab must not push later tabs past the end.
+      const fp = env.model.createStashFolder("Fresh");
+      await events.next(browser.bookmarks.onCreated);
+      const folder = await fp;
+
+      const p = env.model.putItemsInFolder({
+        items: [
+          env.model.tabs.tab(env.tabs.real_bob.id)!,
+          env.model.tabs.tab(env.tabs.real_harry.id)!,
+          env.model.tabs.tab(env.tabs.real_estelle.id)!,
+        ],
+        toFolder: folder,
+      });
+      await events.nextN(browser.bookmarks.onCreated, 2);
+      await events.nextN(browser.tabs.onUpdated, 3);
+      await p;
+
+      const real_folder = await browser.bookmarks.getChildren(folder.id);
+      expect(real_folder.map(c => c.url)).to.deep.equal([
+        `${B}#bob`,
+        `${B}#estelle`,
+      ]);
+    });
+
     it("moves tabs and bookmarks into the folder", async () => {
       const p = env.model.putItemsInFolder({
         items: [
