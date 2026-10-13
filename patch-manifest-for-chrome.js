@@ -12,7 +12,8 @@ const icon = manifest?.browser_action?.default_icon;
 if (!icon) {
   throw new Error(`browser_action.default_icon key not found`);
 }
-for (const k in icon) icon[k] = `icons/logo-${k}.svg`;
+// Chrome can't use SVGs for toolbar icons, and there are no per-size SVGs.
+for (const k in icon) icon[k] = `icons/logo-${k}.png`;
 
 delete manifest.page_action;
 delete manifest.sidebar_action;
